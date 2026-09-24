@@ -1,1 +1,0 @@
-if('serviceWorker' in navigator) navigator.serviceWorker.register('/butce/dev-sw.js?dev-sw', { scope: '/butce/', type: 'classic' })
