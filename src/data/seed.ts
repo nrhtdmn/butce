@@ -5,6 +5,19 @@ const ym = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0
 const d = (day: number) =>
   `${ym}-${String(day).padStart(2, '0')}`;
 
+export const emptyState: AppState = {
+  settings: {
+    currency: 'TRY',
+    locale: 'tr-TR',
+    name: '',
+    startBalance: 0,
+  },
+  categories: [],
+  transactions: [],
+  budgets: [],
+  goals: [],
+};
+
 export const seedState: AppState = {
   settings: {
     currency: 'TRY',

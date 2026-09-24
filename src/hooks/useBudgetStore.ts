@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { seedState } from '../data/seed';
+import { emptyState, seedState } from '../data/seed';
 import type {
   AppSettings,
   AppState,
@@ -147,7 +147,7 @@ export function useBudgetStore() {
   }, []);
 
   const resetData = useCallback(() => {
-    setState(structuredClone(seedState));
+    setState(structuredClone(emptyState));
   }, []);
 
   const importState = useCallback((next: AppState) => {
