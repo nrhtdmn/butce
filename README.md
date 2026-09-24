@@ -2,6 +2,8 @@
 
 Modern, Türkçe kişisel bütçe uygulaması. Gelir-gider takibi, kategori yönetimi, aylık bütçe limitleri, birikim hedefleri ve görsel raporlar.
 
+**Canlı site:** [https://nrhtdmn.github.io/butce/](https://nrhtdmn.github.io/butce/)
+
 ## Özellikler
 
 - **Özet paneli** — bakiye, gelir, gider, tasarruf oranı ve nakit akışı grafiği
