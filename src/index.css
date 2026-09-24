@@ -334,13 +334,16 @@ img {
 .stat {
   position: relative;
   overflow: hidden;
-  padding: 22px;
+  padding: clamp(14px, 2.2vw, 22px);
   border-radius: var(--radius);
   border: 1px solid transparent;
-  min-height: 128px;
+  min-height: 0;
+  min-width: 0;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
+  gap: 6px;
+  container-type: inline-size;
 }
 
 .stat::after {
@@ -353,30 +356,47 @@ img {
   top: -30px;
   opacity: 0.15;
   background: currentColor;
+  pointer-events: none;
 }
 
 .stat-label {
-  font-size: 0.82rem;
+  font-size: clamp(0.7rem, 2.8cqi + 0.35rem, 0.82rem);
   font-weight: 500;
   opacity: 0.75;
   display: flex;
   align-items: center;
   gap: 6px;
+  position: relative;
+  z-index: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .stat-value {
   font-family: var(--display);
   font-weight: 800;
-  font-size: 1.55rem;
-  letter-spacing: -0.03em;
-  line-height: 1.1;
-  margin-top: 10px;
+  font-size: clamp(0.95rem, 9cqi, 1.55rem);
+  letter-spacing: -0.04em;
+  line-height: 1.15;
+  margin-top: 4px;
+  position: relative;
+  z-index: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
 }
 
 .stat-hint {
-  font-size: 0.78rem;
+  font-size: clamp(0.65rem, 2.4cqi + 0.3rem, 0.78rem);
   opacity: 0.65;
-  margin-top: 8px;
+  margin-top: 2px;
+  position: relative;
+  z-index: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .stat-balance {
@@ -795,6 +815,11 @@ img {
 @media (max-width: 1100px) {
   .grid-stats {
     grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+  }
+
+  .stat-value {
+    font-size: clamp(1rem, 5.5vw, 1.45rem);
   }
 
   .grid-2 {
@@ -803,6 +828,25 @@ img {
 
   .report-kpis {
     grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 420px) {
+  .grid-stats {
+    gap: 10px;
+  }
+
+  .stat {
+    padding: 12px;
+  }
+
+  .stat-value {
+    font-size: clamp(0.9rem, 7.2vw, 1.2rem);
+  }
+
+  .stat-label,
+  .stat-hint {
+    font-size: 0.68rem;
   }
 }
 
