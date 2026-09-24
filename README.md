@@ -14,7 +14,7 @@ PWA olarak ana ekrana eklenebilir; çevrimdışı çalışır.
 - **Bütçeler** — kategori bazlı aylık limitler ve kullanım çubukları
 - **Hedefler** — birikim hedefleri ve katkı ekleme
 - **Raporlar** — pasta ve çubuk grafiklerle analiz
-- **Ayarlar** — profil, para birimi, veri sıfırlama
+- **Ayarlar** — profil, para birimi, JSON yedek (dışa/içe aktar), veri sıfırlama
 - Veriler **localStorage**'da saklanır (sunucu gerekmez)
 
 ## Kurulum

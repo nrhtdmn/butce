@@ -150,6 +150,21 @@ export function useBudgetStore() {
     setState(structuredClone(seedState));
   }, []);
 
+  const importState = useCallback((next: AppState) => {
+    setState(structuredClone(next));
+  }, []);
+
+  const getExportState = useCallback(
+    (): AppState => ({
+      transactions: state.transactions,
+      categories: state.categories,
+      budgets: state.budgets,
+      goals: state.goals,
+      settings: state.settings,
+    }),
+    [state],
+  );
+
   const spentByCategory = useCallback(
     (categoryId: string, forMonth = month) =>
       state.transactions
@@ -183,6 +198,8 @@ export function useBudgetStore() {
     deleteGoal,
     updateSettings,
     resetData,
+    importState,
+    getExportState,
     spentByCategory,
   };
 }

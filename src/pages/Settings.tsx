@@ -1,6 +1,36 @@
+import { useRef, useState } from 'react';
+import { Download, Upload } from 'lucide-react';
 import type { BudgetStore } from '../hooks/useBudgetStore';
+import { downloadBackup, readBackupFile } from '../utils/backup';
 
 export function Settings({ store }: { store: BudgetStore }) {
+  const fileRef = useRef<HTMLInputElement>(null);
+  const [message, setMessage] = useState<string | null>(null);
+
+  const onExport = () => {
+    downloadBackup(store.getExportState());
+    setMessage('Yedek indirildi.');
+  };
+
+  const onImportClick = () => fileRef.current?.click();
+
+  const onImportFile = async (file: File | undefined) => {
+    if (!file) return;
+    try {
+      const data = await readBackupFile(file);
+      const ok = confirm(
+        'İçe aktarma mevcut tüm verilerin üzerine yazacak. Devam edilsin mi?',
+      );
+      if (!ok) return;
+      store.importState(data);
+      setMessage('Yedek başarıyla içe aktarıldı.');
+    } catch {
+      setMessage('Geçersiz veya bozuk yedek dosyası.');
+    } finally {
+      if (fileRef.current) fileRef.current.value = '';
+    }
+  };
+
   return (
     <div className="page-enter">
       <div className="topbar">
@@ -46,6 +76,34 @@ export function Settings({ store }: { store: BudgetStore }) {
       </div>
 
       <div className="panel settings-block">
+        <div className="panel-title">Yedekleme</div>
+        <p style={{ color: 'var(--muted)', fontSize: '0.9rem', lineHeight: 1.6, marginBottom: 14 }}>
+          Tüm hareketler, kategoriler, bütçeler, hedefler ve ayarları JSON dosyası olarak
+          dışa aktarabilir veya daha önce aldığın yedeği içe aktarabilirsin.
+        </p>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10 }}>
+          <button className="btn btn-primary" type="button" onClick={onExport}>
+            <Download size={16} />
+            Dışa aktar
+          </button>
+          <button className="btn btn-ghost" type="button" onClick={onImportClick}>
+            <Upload size={16} />
+            İçe aktar
+          </button>
+          <input
+            ref={fileRef}
+            type="file"
+            accept="application/json,.json"
+            hidden
+            onChange={(e) => onImportFile(e.target.files?.[0])}
+          />
+        </div>
+        {message && (
+          <p style={{ marginTop: 12, fontSize: '0.85rem', color: 'var(--teal)' }}>{message}</p>
+        )}
+      </div>
+
+      <div className="panel settings-block">
         <div className="panel-title">Uygulama (PWA)</div>
         <p style={{ color: 'var(--muted)', fontSize: '0.9rem', lineHeight: 1.6, marginBottom: 12 }}>
           DENGE bir Progressive Web App’tir. Tarayıcıdan “Yükle / Ana ekrana ekle”
@@ -88,6 +146,7 @@ export function Settings({ store }: { store: BudgetStore }) {
           onClick={() => {
             if (confirm('Tüm veriler silinip örnek verilere dönülsün mü?')) {
               store.resetData();
+              setMessage(null);
             }
           }}
         >
