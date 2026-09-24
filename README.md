@@ -4,6 +4,8 @@ Modern, Türkçe kişisel bütçe uygulaması. Gelir-gider takibi, kategori yön
 
 **Canlı site:** [https://nrhtdmn.github.io/butce/](https://nrhtdmn.github.io/butce/)
 
+PWA olarak ana ekrana eklenebilir; çevrimdışı çalışır.
+
 ## Özellikler
 
 - **Özet paneli** — bakiye, gelir, gider, tasarruf oranı ve nakit akışı grafiği

@@ -46,6 +46,19 @@ export function Settings({ store }: { store: BudgetStore }) {
       </div>
 
       <div className="panel settings-block">
+        <div className="panel-title">Uygulama (PWA)</div>
+        <p style={{ color: 'var(--muted)', fontSize: '0.9rem', lineHeight: 1.6, marginBottom: 12 }}>
+          DENGE bir Progressive Web App’tir. Tarayıcıdan “Yükle / Ana ekrana ekle”
+          ile uygulama gibi kullanabilir, çevrimdışı erişebilirsin.
+        </p>
+        <p style={{ color: 'var(--muted)', fontSize: '0.85rem' }}>
+          {typeof navigator !== 'undefined' && 'serviceWorker' in navigator
+            ? '✓ Bu tarayıcı PWA destekliyor'
+            : 'Bu tarayıcıda PWA sınırlı olabilir'}
+        </p>
+      </div>
+
+      <div className="panel settings-block">
         <div className="panel-title">Hakkında</div>
         <p style={{ color: 'var(--muted)', fontSize: '0.95rem', lineHeight: 1.6 }}>
           <strong style={{ color: 'var(--ink)', fontFamily: 'var(--display)' }}>DENGE</strong>,

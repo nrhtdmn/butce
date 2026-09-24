@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { MobileToggle, PAGE_META, Sidebar } from './components/Sidebar';
+import { InstallPrompt } from './components/InstallPrompt';
 import { useBudgetStore } from './hooks/useBudgetStore';
 import type { PageId } from './types';
 import { Dashboard } from './pages/Dashboard';
@@ -36,6 +37,7 @@ function App() {
         {page === 'settings' && <Settings store={store} />}
       </main>
       <MobileToggle open={navOpen} onToggle={() => setNavOpen((v) => !v)} />
+      <InstallPrompt />
     </div>
   );
 }
