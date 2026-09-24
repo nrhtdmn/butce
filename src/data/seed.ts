@@ -1,0 +1,77 @@
+import type { AppState } from '../types';
+
+const today = new Date();
+const ym = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}`;
+const d = (day: number) =>
+  `${ym}-${String(day).padStart(2, '0')}`;
+
+export const seedState: AppState = {
+  settings: {
+    currency: 'TRY',
+    locale: 'tr-TR',
+    name: 'Nurhat',
+    startBalance: 12500,
+  },
+  categories: [
+    { id: 'c1', name: 'Maaş', icon: 'wallet', color: '#1B6B5A', type: 'income' },
+    { id: 'c2', name: 'Freelance', icon: 'laptop', color: '#2A9D8F', type: 'income' },
+    { id: 'c3', name: 'Yatırım', icon: 'trending', color: '#457B9D', type: 'income' },
+    { id: 'c4', name: 'Market', icon: 'cart', color: '#E76F51', type: 'expense' },
+    { id: 'c5', name: 'Ulaşım', icon: 'bus', color: '#F4A261', type: 'expense' },
+    { id: 'c6', name: 'Faturalar', icon: 'bolt', color: '#E9C46A', type: 'expense' },
+    { id: 'c7', name: 'Eğlence', icon: 'film', color: '#E63946', type: 'expense' },
+    { id: 'c8', name: 'Sağlık', icon: 'heart', color: '#9B5DE5', type: 'expense' },
+    { id: 'c9', name: 'Kafe', icon: 'coffee', color: '#C77DFF', type: 'expense' },
+    { id: 'c10', name: 'Alışveriş', icon: 'bag', color: '#00BBF9', type: 'expense' },
+  ],
+  transactions: [
+    { id: 't1', amount: 42000, type: 'income', categoryId: 'c1', note: 'Aylık maaş', date: d(1) },
+    { id: 't2', amount: 8500, type: 'income', categoryId: 'c2', note: 'Proje teslimi', date: d(5) },
+    { id: 't3', amount: 1240, type: 'expense', categoryId: 'c4', note: 'Haftalık market', date: d(3) },
+    { id: 't4', amount: 890, type: 'expense', categoryId: 'c4', note: 'Migros', date: d(10) },
+    { id: 't5', amount: 450, type: 'expense', categoryId: 'c5', note: 'Akbil + taksi', date: d(4) },
+    { id: 't6', amount: 2100, type: 'expense', categoryId: 'c6', note: 'Elektrik + internet', date: d(7) },
+    { id: 't7', amount: 680, type: 'expense', categoryId: 'c7', note: 'Sinema + yemek', date: d(8) },
+    { id: 't8', amount: 320, type: 'expense', categoryId: 'c9', note: 'Kahve & brunch', date: d(9) },
+    { id: 't9', amount: 1500, type: 'expense', categoryId: 'c10', note: 'Kıyafet', date: d(12) },
+    { id: 't10', amount: 750, type: 'expense', categoryId: 'c8', note: 'Eczane', date: d(6) },
+    { id: 't11', amount: 560, type: 'expense', categoryId: 'c5', note: 'Benzin', date: d(14) },
+    { id: 't12', amount: 2100, type: 'income', categoryId: 'c3', note: 'Temettü', date: d(15) },
+    { id: 't13', amount: 980, type: 'expense', categoryId: 'c4', note: 'Organik pazar', date: d(16) },
+    { id: 't14', amount: 420, type: 'expense', categoryId: 'c9', note: 'Ofis kahvesi', date: d(17) },
+    { id: 't15', amount: 1850, type: 'expense', categoryId: 'c7', note: 'Konser bileti', date: d(18) },
+  ],
+  budgets: [
+    { id: 'b1', categoryId: 'c4', limit: 4000, month: ym },
+    { id: 'b2', categoryId: 'c5', limit: 1500, month: ym },
+    { id: 'b3', categoryId: 'c6', limit: 2500, month: ym },
+    { id: 'b4', categoryId: 'c7', limit: 2000, month: ym },
+    { id: 'b5', categoryId: 'c9', limit: 800, month: ym },
+  ],
+  goals: [
+    {
+      id: 'g1',
+      name: 'Acil durum fonu',
+      target: 50000,
+      saved: 28500,
+      deadline: `${today.getFullYear() + 1}-06-01`,
+      color: '#1B6B5A',
+    },
+    {
+      id: 'g2',
+      name: 'Japonya tatili',
+      target: 75000,
+      saved: 18200,
+      deadline: `${today.getFullYear() + 1}-09-01`,
+      color: '#E76F51',
+    },
+    {
+      id: 'g3',
+      name: 'Yeni laptop',
+      target: 45000,
+      saved: 31200,
+      deadline: `${today.getFullYear()}-12-31`,
+      color: '#457B9D',
+    },
+  ],
+};
