@@ -5,17 +5,35 @@ import type {
   AppState,
   Budget,
   Category,
+  Debt,
   Goal,
+  Installment,
+  Receivable,
   Transaction,
 } from '../types';
 import { currentMonth, uid } from '../utils/format';
 
 const STORAGE_KEY = 'denge-budget-v1';
 
+function normalizeState(raw: Partial<AppState> | null): AppState {
+  const base = structuredClone(seedState);
+  if (!raw) return base;
+  return {
+    settings: { ...base.settings, ...raw.settings },
+    transactions: raw.transactions ?? [],
+    categories: raw.categories ?? [],
+    budgets: raw.budgets ?? [],
+    goals: raw.goals ?? [],
+    debts: raw.debts ?? [],
+    receivables: raw.receivables ?? [],
+    installments: raw.installments ?? [],
+  };
+}
+
 function loadState(): AppState {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
-    if (raw) return JSON.parse(raw) as AppState;
+    if (raw) return normalizeState(JSON.parse(raw) as Partial<AppState>);
   } catch {
     /* ignore */
   }
@@ -55,6 +73,32 @@ export function useBudgetStore() {
       .reduce((s, t) => s + t.amount, 0);
     return state.settings.startBalance + allInc - allExp;
   }, [state.transactions, state.settings.startBalance]);
+
+  const totalDebt = useMemo(
+    () =>
+      state.debts
+        .filter((d) => d.status === 'active')
+        .reduce((s, d) => s + d.remaining, 0),
+    [state.debts],
+  );
+
+  const totalReceivable = useMemo(
+    () =>
+      state.receivables
+        .filter((r) => r.status === 'active')
+        .reduce((s, r) => s + r.remaining, 0),
+    [state.receivables],
+  );
+
+  const monthlyInstallments = useMemo(
+    () =>
+      state.installments
+        .filter((i) => i.status === 'active')
+        .reduce((s, i) => s + i.monthlyAmount, 0),
+    [state.installments],
+  );
+
+  const netWorth = balance - totalDebt + totalReceivable;
 
   const addTransaction = useCallback((tx: Omit<Transaction, 'id'>) => {
     setState((s) => ({
@@ -142,6 +186,81 @@ export function useBudgetStore() {
     setState((s) => ({ ...s, goals: s.goals.filter((g) => g.id !== id) }));
   }, []);
 
+  const addDebt = useCallback((debt: Omit<Debt, 'id'>) => {
+    setState((s) => ({ ...s, debts: [{ ...debt, id: uid('d') }, ...s.debts] }));
+  }, []);
+
+  const updateDebt = useCallback((id: string, patch: Partial<Debt>) => {
+    setState((s) => ({
+      ...s,
+      debts: s.debts.map((d) => (d.id === id ? { ...d, ...patch } : d)),
+    }));
+  }, []);
+
+  const deleteDebt = useCallback((id: string) => {
+    setState((s) => ({ ...s, debts: s.debts.filter((d) => d.id !== id) }));
+  }, []);
+
+  const addReceivable = useCallback((item: Omit<Receivable, 'id'>) => {
+    setState((s) => ({
+      ...s,
+      receivables: [{ ...item, id: uid('r') }, ...s.receivables],
+    }));
+  }, []);
+
+  const updateReceivable = useCallback((id: string, patch: Partial<Receivable>) => {
+    setState((s) => ({
+      ...s,
+      receivables: s.receivables.map((r) => (r.id === id ? { ...r, ...patch } : r)),
+    }));
+  }, []);
+
+  const deleteReceivable = useCallback((id: string) => {
+    setState((s) => ({
+      ...s,
+      receivables: s.receivables.filter((r) => r.id !== id),
+    }));
+  }, []);
+
+  const addInstallment = useCallback((item: Omit<Installment, 'id'>) => {
+    setState((s) => ({
+      ...s,
+      installments: [{ ...item, id: uid('i') }, ...s.installments],
+    }));
+  }, []);
+
+  const updateInstallment = useCallback((id: string, patch: Partial<Installment>) => {
+    setState((s) => ({
+      ...s,
+      installments: s.installments.map((i) => (i.id === id ? { ...i, ...patch } : i)),
+    }));
+  }, []);
+
+  const deleteInstallment = useCallback((id: string) => {
+    setState((s) => ({
+      ...s,
+      installments: s.installments.filter((i) => i.id !== id),
+    }));
+  }, []);
+
+  const payInstallment = useCallback((id: string) => {
+    setState((s) => ({
+      ...s,
+      installments: s.installments.map((i) => {
+        if (i.id !== id || i.status === 'paid') return i;
+        const paidCount = Math.min(i.totalCount, i.paidCount + 1);
+        const next = new Date(i.nextDueDate + 'T12:00:00');
+        next.setMonth(next.getMonth() + 1);
+        return {
+          ...i,
+          paidCount,
+          nextDueDate: next.toISOString().slice(0, 10),
+          status: paidCount >= i.totalCount ? 'paid' : 'active',
+        };
+      }),
+    }));
+  }, []);
+
   const updateSettings = useCallback((patch: Partial<AppSettings>) => {
     setState((s) => ({ ...s, settings: { ...s.settings, ...patch } }));
   }, []);
@@ -151,19 +270,10 @@ export function useBudgetStore() {
   }, []);
 
   const importState = useCallback((next: AppState) => {
-    setState(structuredClone(next));
+    setState(normalizeState(next));
   }, []);
 
-  const getExportState = useCallback(
-    (): AppState => ({
-      transactions: state.transactions,
-      categories: state.categories,
-      budgets: state.budgets,
-      goals: state.goals,
-      settings: state.settings,
-    }),
-    [state],
-  );
+  const getExportState = useCallback((): AppState => structuredClone(state), [state]);
 
   const spentByCategory = useCallback(
     (categoryId: string, forMonth = month) =>
@@ -185,6 +295,10 @@ export function useBudgetStore() {
     income,
     expense,
     balance,
+    totalDebt,
+    totalReceivable,
+    monthlyInstallments,
+    netWorth,
     addTransaction,
     updateTransaction,
     deleteTransaction,
@@ -196,6 +310,16 @@ export function useBudgetStore() {
     addGoal,
     updateGoal,
     deleteGoal,
+    addDebt,
+    updateDebt,
+    deleteDebt,
+    addReceivable,
+    updateReceivable,
+    deleteReceivable,
+    addInstallment,
+    updateInstallment,
+    deleteInstallment,
+    payInstallment,
     updateSettings,
     resetData,
     importState,

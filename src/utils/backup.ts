@@ -22,6 +22,15 @@ function isAppState(value: unknown): value is AppState {
   );
 }
 
+function normalizeImported(data: AppState): AppState {
+  return {
+    ...data,
+    debts: data.debts ?? [],
+    receivables: data.receivables ?? [],
+    installments: data.installments ?? [],
+  };
+}
+
 export function buildBackup(state: AppState): BackupFile {
   return {
     app: 'DENGE',
@@ -34,12 +43,12 @@ export function buildBackup(state: AppState): BackupFile {
 export function parseBackup(raw: string): AppState {
   const parsed = JSON.parse(raw) as unknown;
 
-  if (isAppState(parsed)) return parsed;
+  if (isAppState(parsed)) return normalizeImported(parsed);
 
   if (parsed && typeof parsed === 'object') {
     const file = parsed as Partial<BackupFile>;
     if (file.app === 'DENGE' && isAppState(file.data)) {
-      return file.data;
+      return normalizeImported(file.data);
     }
   }
 

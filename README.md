@@ -8,11 +8,15 @@ PWA olarak ana ekrana eklenebilir; çevrimdışı çalışır.
 
 ## Özellikler
 
-- **Özet paneli** — bakiye, gelir, gider, tasarruf oranı ve nakit akışı grafiği
+- **Özet paneli** — bakiye, net varlık, borç/alacak/taksit özeti, tavsiyeler
 - **Hareketler** — gelir/gider ekleme, düzenleme, silme, filtreleme
 - **Kategoriler** — ikon ve renklerle özelleştirilebilir
 - **Bütçeler** — kategori bazlı aylık limitler ve kullanım çubukları
 - **Hedefler** — birikim hedefleri ve katkı ekleme
+- **Borçlar** — kredi/kişi borçları, ödeme takibi
+- **Alacaklar** — tahsilat takibi
+- **Taksitler** — aylık taksit planları
+- **Tavsiyeler** — verilere göre kişiselleştirilmiş ekonomi önerileri
 - **Raporlar** — pasta ve çubuk grafiklerle analiz
 - **Ayarlar** — profil, para birimi, JSON yedek (dışa/içe aktar), veri sıfırlama
 - Veriler **localStorage**'da saklanır (sunucu gerekmez)

@@ -8,6 +8,10 @@ import { Transactions } from './pages/Transactions';
 import { Categories } from './pages/Categories';
 import { Budgets } from './pages/Budgets';
 import { Goals } from './pages/Goals';
+import { Debts } from './pages/Debts';
+import { Receivables } from './pages/Receivables';
+import { Installments } from './pages/Installments';
+import { Advice } from './pages/Advice';
 import { Reports } from './pages/Reports';
 import { Settings } from './pages/Settings';
 
@@ -33,6 +37,10 @@ function App() {
         {page === 'categories' && <Categories store={store} />}
         {page === 'budgets' && <Budgets store={store} />}
         {page === 'goals' && <Goals store={store} />}
+        {page === 'debts' && <Debts store={store} />}
+        {page === 'receivables' && <Receivables store={store} />}
+        {page === 'installments' && <Installments store={store} />}
+        {page === 'advice' && <Advice store={store} />}
         {page === 'reports' && <Reports store={store} />}
         {page === 'settings' && <Settings store={store} />}
       </main>

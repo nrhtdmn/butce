@@ -8,6 +8,10 @@ import {
   Settings,
   Menu,
   X,
+  HandCoins,
+  WalletCards,
+  CalendarClock,
+  Lightbulb,
 } from 'lucide-react';
 import type { PageId } from '../types';
 import { formatMoney } from '../utils/format';
@@ -19,6 +23,10 @@ const NAV: { id: PageId; label: string; icon: typeof LayoutDashboard }[] = [
   { id: 'categories', label: 'Kategoriler', icon: Tags },
   { id: 'budgets', label: 'Bütçeler', icon: PieChart },
   { id: 'goals', label: 'Hedefler', icon: Target },
+  { id: 'debts', label: 'Borçlar', icon: HandCoins },
+  { id: 'receivables', label: 'Alacaklar', icon: WalletCards },
+  { id: 'installments', label: 'Taksitler', icon: CalendarClock },
+  { id: 'advice', label: 'Tavsiyeler', icon: Lightbulb },
   { id: 'reports', label: 'Raporlar', icon: BarChart3 },
   { id: 'settings', label: 'Ayarlar', icon: Settings },
 ];
@@ -108,6 +116,22 @@ export const PAGE_META: Record<PageId, { title: string; subtitle: string }> = {
   goals: {
     title: 'Hedefler',
     subtitle: 'Birikimlerini görünür kıl',
+  },
+  debts: {
+    title: 'Borçlar',
+    subtitle: 'Ödeyeceğin yükümlülükler',
+  },
+  receivables: {
+    title: 'Alacaklar',
+    subtitle: 'Sana dönecek paralar',
+  },
+  installments: {
+    title: 'Taksitler',
+    subtitle: 'Aylık ödeme planların',
+  },
+  advice: {
+    title: 'Tavsiyeler',
+    subtitle: 'Akıllı ekonomi önerileri',
   },
   reports: {
     title: 'Raporlar',

@@ -8,12 +8,13 @@ import {
   XAxis,
   YAxis,
 } from 'recharts';
-import { ArrowDownLeft, ArrowUpRight, PiggyBank, Sparkles, Plus } from 'lucide-react';
+import { ArrowDownLeft, ArrowUpRight, PiggyBank, Sparkles, Plus, HandCoins, WalletCards, CalendarClock, Scale } from 'lucide-react';
 import { motion } from 'framer-motion';
 import type { BudgetStore } from '../hooks/useBudgetStore';
 import { formatMoney, formatShortDate, monthLabel } from '../utils/format';
 import { CategoryIcon } from '../components/CategoryIcon';
 import { TransactionModal } from '../components/TransactionModal';
+import { buildAdvice } from '../utils/advice';
 
 export function Dashboard({ store }: { store: BudgetStore }) {
   const [modalOpen, setModalOpen] = useState(false);
@@ -43,6 +44,8 @@ export function Dashboard({ store }: { store: BudgetStore }) {
     })
     .sort((a, b) => b.pct - a.pct)
     .slice(0, 4);
+
+  const topAdvice = useMemo(() => buildAdvice(store).slice(0, 3), [store]);
 
   return (
     <div className="page-enter">
@@ -114,6 +117,53 @@ export function Dashboard({ store }: { store: BudgetStore }) {
           </div>
         </motion.div>
       </div>
+
+      <div className="finance-strip">
+        <div className="finance-chip">
+          <Scale size={16} />
+          <div>
+            <span>Net varlık</span>
+            <strong>{formatMoney(store.netWorth, store.settings)}</strong>
+          </div>
+        </div>
+        <div className="finance-chip">
+          <HandCoins size={16} />
+          <div>
+            <span>Borç</span>
+            <strong>{formatMoney(store.totalDebt, store.settings)}</strong>
+          </div>
+        </div>
+        <div className="finance-chip">
+          <WalletCards size={16} />
+          <div>
+            <span>Alacak</span>
+            <strong>{formatMoney(store.totalReceivable, store.settings)}</strong>
+          </div>
+        </div>
+        <div className="finance-chip">
+          <CalendarClock size={16} />
+          <div>
+            <span>Aylık taksit</span>
+            <strong>{formatMoney(store.monthlyInstallments, store.settings)}</strong>
+          </div>
+        </div>
+      </div>
+
+      {topAdvice.length > 0 && (
+        <div className="panel" style={{ marginBottom: 16 }}>
+          <div className="panel-title">Öne çıkan tavsiyeler</div>
+          <div className="advice-list compact">
+            {topAdvice.map((a) => (
+              <article key={a.id} className={`advice-card advice-${a.level}`}>
+                <div>
+                  <h3>{a.title}</h3>
+                  <p>{a.body}</p>
+                </div>
+              </article>
+            ))}
+          </div>
+        </div>
+      )}
 
       <div className="grid-2">
         <div className="panel">
