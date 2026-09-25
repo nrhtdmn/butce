@@ -34,6 +34,8 @@ export interface Goal {
 }
 
 export type DebtStatus = 'active' | 'paid';
+export type BillStatus = 'pending' | 'paid';
+export type BillKind = 'utility' | 'statement' | 'subscription' | 'other';
 
 export interface Debt {
   id: string;
@@ -42,6 +44,7 @@ export interface Debt {
   total: number;
   remaining: number;
   dueDate: string;
+  lastPaymentDate?: string;
   interestRate: number;
   note: string;
   status: DebtStatus;
@@ -54,6 +57,7 @@ export interface Receivable {
   total: number;
   remaining: number;
   dueDate: string;
+  lastPaymentDate?: string;
   note: string;
   status: DebtStatus;
 }
@@ -66,8 +70,21 @@ export interface Installment {
   totalCount: number;
   paidCount: number;
   nextDueDate: string;
+  lastPaymentDate?: string;
   note: string;
   status: DebtStatus;
+}
+
+export interface Bill {
+  id: string;
+  title: string;
+  provider: string;
+  amount: number;
+  dueDate: string;
+  lastPaymentDate?: string;
+  kind: BillKind;
+  note: string;
+  status: BillStatus;
 }
 
 export interface AppSettings {
@@ -85,6 +102,7 @@ export interface AppState {
   debts: Debt[];
   receivables: Receivable[];
   installments: Installment[];
+  bills: Bill[];
   settings: AppSettings;
 }
 
@@ -97,6 +115,8 @@ export type PageId =
   | 'debts'
   | 'receivables'
   | 'installments'
+  | 'bills'
+  | 'calendar'
   | 'advice'
   | 'reports'
   | 'settings';
@@ -108,4 +128,13 @@ export interface AdviceItem {
   level: AdviceLevel;
   title: string;
   body: string;
+}
+
+export interface CalendarEvent {
+  id: string;
+  date: string;
+  title: string;
+  amount: number;
+  kind: 'debt' | 'receivable' | 'installment' | 'bill';
+  status: string;
 }

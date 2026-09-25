@@ -3,7 +3,9 @@ import { emptyState, seedState } from '../data/seed';
 import type {
   AppSettings,
   AppState,
+  Bill,
   Budget,
+  CalendarEvent,
   Category,
   Debt,
   Goal,
@@ -12,32 +14,28 @@ import type {
   Transaction,
 } from '../types';
 import { currentMonth, uid } from '../utils/format';
+import {
+  ensureSystemCategory,
+  installmentRemaining,
+  makeTx,
+  normalizeAppState,
+  unpaidBillsTotal,
+} from '../utils/finance';
 
 const STORAGE_KEY = 'denge-budget-v1';
-
-function normalizeState(raw: Partial<AppState> | null): AppState {
-  const base = structuredClone(seedState);
-  if (!raw) return base;
-  return {
-    settings: { ...base.settings, ...raw.settings },
-    transactions: raw.transactions ?? [],
-    categories: raw.categories ?? [],
-    budgets: raw.budgets ?? [],
-    goals: raw.goals ?? [],
-    debts: raw.debts ?? [],
-    receivables: raw.receivables ?? [],
-    installments: raw.installments ?? [],
-  };
-}
 
 function loadState(): AppState {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
-    if (raw) return normalizeState(JSON.parse(raw) as Partial<AppState>);
+    if (raw) return normalizeAppState(JSON.parse(raw) as Partial<AppState>, seedState);
   } catch {
     /* ignore */
   }
   return structuredClone(seedState);
+}
+
+function todayIso() {
+  return new Date().toISOString().slice(0, 10);
 }
 
 export function useBudgetStore() {
@@ -75,10 +73,7 @@ export function useBudgetStore() {
   }, [state.transactions, state.settings.startBalance]);
 
   const totalDebt = useMemo(
-    () =>
-      state.debts
-        .filter((d) => d.status === 'active')
-        .reduce((s, d) => s + d.remaining, 0),
+    () => state.debts.filter((d) => d.status === 'active').reduce((s, d) => s + d.remaining, 0),
     [state.debts],
   );
 
@@ -98,7 +93,64 @@ export function useBudgetStore() {
     [state.installments],
   );
 
-  const netWorth = balance - totalDebt + totalReceivable;
+  const installmentDebt = useMemo(
+    () =>
+      state.installments
+        .filter((i) => i.status === 'active')
+        .reduce((s, i) => s + installmentRemaining(i), 0),
+    [state.installments],
+  );
+
+  const totalBillsDue = useMemo(() => unpaidBillsTotal(state.bills), [state.bills]);
+
+  const totalLiabilities = totalDebt + installmentDebt + totalBillsDue;
+
+  const netWorth = balance - totalDebt - installmentDebt + totalReceivable;
+
+  const calendarEvents = useMemo((): CalendarEvent[] => {
+    const events: CalendarEvent[] = [];
+    for (const d of state.debts.filter((x) => x.status === 'active')) {
+      events.push({
+        id: `debt-${d.id}`,
+        date: d.dueDate,
+        title: `Borç: ${d.title}`,
+        amount: d.remaining,
+        kind: 'debt',
+        status: d.status,
+      });
+    }
+    for (const r of state.receivables.filter((x) => x.status === 'active')) {
+      events.push({
+        id: `recv-${r.id}`,
+        date: r.dueDate,
+        title: `Alacak: ${r.title}`,
+        amount: r.remaining,
+        kind: 'receivable',
+        status: r.status,
+      });
+    }
+    for (const i of state.installments.filter((x) => x.status === 'active')) {
+      events.push({
+        id: `inst-${i.id}`,
+        date: i.nextDueDate,
+        title: `Taksit: ${i.title}`,
+        amount: i.monthlyAmount,
+        kind: 'installment',
+        status: i.status,
+      });
+    }
+    for (const b of state.bills.filter((x) => x.status === 'pending')) {
+      events.push({
+        id: `bill-${b.id}`,
+        date: b.dueDate,
+        title: `Fatura: ${b.title}`,
+        amount: b.amount,
+        kind: 'bill',
+        status: b.status,
+      });
+    }
+    return events.sort((a, b) => a.date.localeCompare(b.date));
+  }, [state.debts, state.receivables, state.installments, state.bills]);
 
   const addTransaction = useCallback((tx: Omit<Transaction, 'id'>) => {
     setState((s) => ({
@@ -157,10 +209,7 @@ export function useBudgetStore() {
           ),
         };
       }
-      return {
-        ...s,
-        budgets: [...s.budgets, { ...budget, id: uid('b') }],
-      };
+      return { ...s, budgets: [...s.budgets, { ...budget, id: uid('b') }] };
     });
   }, []);
 
@@ -169,10 +218,7 @@ export function useBudgetStore() {
   }, []);
 
   const addGoal = useCallback((goal: Omit<Goal, 'id'>) => {
-    setState((s) => ({
-      ...s,
-      goals: [...s.goals, { ...goal, id: uid('g') }],
-    }));
+    setState((s) => ({ ...s, goals: [...s.goals, { ...goal, id: uid('g') }] }));
   }, []);
 
   const updateGoal = useCallback((id: string, patch: Partial<Goal>) => {
@@ -201,6 +247,34 @@ export function useBudgetStore() {
     setState((s) => ({ ...s, debts: s.debts.filter((d) => d.id !== id) }));
   }, []);
 
+  /** Borç ödemesi → gider + bakiyeden düşer */
+  const payDebt = useCallback((id: string, amount: number) => {
+    if (amount <= 0) return;
+    setState((s) => {
+      const debt = s.debts.find((d) => d.id === id);
+      if (!debt || debt.status === 'paid') return s;
+      const pay = Math.min(amount, debt.remaining);
+      const remaining = Math.max(0, debt.remaining - pay);
+      const { categories, categoryId } = ensureSystemCategory(s.categories, 'debt');
+      const tx = makeTx(categoryId, pay, 'expense', `Borç ödemesi: ${debt.title}`, todayIso());
+      return {
+        ...s,
+        categories,
+        transactions: [tx, ...s.transactions],
+        debts: s.debts.map((d) =>
+          d.id === id
+            ? {
+                ...d,
+                remaining,
+                lastPaymentDate: todayIso(),
+                status: remaining <= 0 ? 'paid' : 'active',
+              }
+            : d,
+        ),
+      };
+    });
+  }, []);
+
   const addReceivable = useCallback((item: Omit<Receivable, 'id'>) => {
     setState((s) => ({
       ...s,
@@ -220,6 +294,34 @@ export function useBudgetStore() {
       ...s,
       receivables: s.receivables.filter((r) => r.id !== id),
     }));
+  }, []);
+
+  /** Tahsilat → gelir + bakiyeye eklenir */
+  const collectReceivable = useCallback((id: string, amount: number) => {
+    if (amount <= 0) return;
+    setState((s) => {
+      const item = s.receivables.find((r) => r.id === id);
+      if (!item || item.status === 'paid') return s;
+      const pay = Math.min(amount, item.remaining);
+      const remaining = Math.max(0, item.remaining - pay);
+      const { categories, categoryId } = ensureSystemCategory(s.categories, 'receivable');
+      const tx = makeTx(categoryId, pay, 'income', `Alacak tahsilatı: ${item.title}`, todayIso());
+      return {
+        ...s,
+        categories,
+        transactions: [tx, ...s.transactions],
+        receivables: s.receivables.map((r) =>
+          r.id === id
+            ? {
+                ...r,
+                remaining,
+                lastPaymentDate: todayIso(),
+                status: remaining <= 0 ? 'paid' : 'active',
+              }
+            : r,
+        ),
+      };
+    });
   }, []);
 
   const addInstallment = useCallback((item: Omit<Installment, 'id'>) => {
@@ -243,22 +345,80 @@ export function useBudgetStore() {
     }));
   }, []);
 
+  /** Taksit ödemesi → gider */
   const payInstallment = useCallback((id: string) => {
+    setState((s) => {
+      const item = s.installments.find((i) => i.id === id);
+      if (!item || item.status === 'paid') return s;
+      const paidCount = Math.min(item.totalCount, item.paidCount + 1);
+      const next = new Date(item.nextDueDate + 'T12:00:00');
+      next.setMonth(next.getMonth() + 1);
+      const { categories, categoryId } = ensureSystemCategory(s.categories, 'installment');
+      const tx = makeTx(
+        categoryId,
+        item.monthlyAmount,
+        'expense',
+        `Taksit: ${item.title} (${paidCount}/${item.totalCount})`,
+        todayIso(),
+      );
+      return {
+        ...s,
+        categories,
+        transactions: [tx, ...s.transactions],
+        installments: s.installments.map((i) =>
+          i.id === id
+            ? {
+                ...i,
+                paidCount,
+                lastPaymentDate: todayIso(),
+                nextDueDate: next.toISOString().slice(0, 10),
+                status: paidCount >= i.totalCount ? 'paid' : 'active',
+              }
+            : i,
+        ),
+      };
+    });
+  }, []);
+
+  const addBill = useCallback((bill: Omit<Bill, 'id'>) => {
+    setState((s) => ({ ...s, bills: [{ ...bill, id: uid('f') }, ...s.bills] }));
+  }, []);
+
+  const updateBill = useCallback((id: string, patch: Partial<Bill>) => {
     setState((s) => ({
       ...s,
-      installments: s.installments.map((i) => {
-        if (i.id !== id || i.status === 'paid') return i;
-        const paidCount = Math.min(i.totalCount, i.paidCount + 1);
-        const next = new Date(i.nextDueDate + 'T12:00:00');
-        next.setMonth(next.getMonth() + 1);
-        return {
-          ...i,
-          paidCount,
-          nextDueDate: next.toISOString().slice(0, 10),
-          status: paidCount >= i.totalCount ? 'paid' : 'active',
-        };
-      }),
+      bills: s.bills.map((b) => (b.id === id ? { ...b, ...patch } : b)),
     }));
+  }, []);
+
+  const deleteBill = useCallback((id: string) => {
+    setState((s) => ({ ...s, bills: s.bills.filter((b) => b.id !== id) }));
+  }, []);
+
+  /** Fatura/ekstre ödemesi → gider */
+  const payBill = useCallback((id: string) => {
+    setState((s) => {
+      const bill = s.bills.find((b) => b.id === id);
+      if (!bill || bill.status === 'paid') return s;
+      const { categories, categoryId } = ensureSystemCategory(s.categories, 'bill');
+      const tx = makeTx(
+        categoryId,
+        bill.amount,
+        'expense',
+        `Fatura/ekstre: ${bill.title}`,
+        todayIso(),
+      );
+      return {
+        ...s,
+        categories,
+        transactions: [tx, ...s.transactions],
+        bills: s.bills.map((b) =>
+          b.id === id
+            ? { ...b, status: 'paid', lastPaymentDate: todayIso() }
+            : b,
+        ),
+      };
+    });
   }, []);
 
   const updateSettings = useCallback((patch: Partial<AppSettings>) => {
@@ -270,7 +430,7 @@ export function useBudgetStore() {
   }, []);
 
   const importState = useCallback((next: AppState) => {
-    setState(normalizeState(next));
+    setState(normalizeAppState(next, emptyState));
   }, []);
 
   const getExportState = useCallback((): AppState => structuredClone(state), [state]);
@@ -298,7 +458,11 @@ export function useBudgetStore() {
     totalDebt,
     totalReceivable,
     monthlyInstallments,
+    installmentDebt,
+    totalBillsDue,
+    totalLiabilities,
     netWorth,
+    calendarEvents,
     addTransaction,
     updateTransaction,
     deleteTransaction,
@@ -313,13 +477,19 @@ export function useBudgetStore() {
     addDebt,
     updateDebt,
     deleteDebt,
+    payDebt,
     addReceivable,
     updateReceivable,
     deleteReceivable,
+    collectReceivable,
     addInstallment,
     updateInstallment,
     deleteInstallment,
     payInstallment,
+    addBill,
+    updateBill,
+    deleteBill,
+    payBill,
     updateSettings,
     resetData,
     importState,

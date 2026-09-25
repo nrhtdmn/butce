@@ -4,6 +4,7 @@ import type { BudgetStore } from '../hooks/useBudgetStore';
 import type { Receivable } from '../types';
 import { formatMoney, formatShortDate } from '../utils/format';
 import { Modal } from '../components/Modal';
+import { LiabilitySummary } from '../components/LiabilitySummary';
 
 export function Receivables({ store }: { store: BudgetStore }) {
   const [open, setOpen] = useState(false);
@@ -42,13 +43,8 @@ export function Receivables({ store }: { store: BudgetStore }) {
     e.preventDefault();
     if (!collectId) return;
     const amt = Number(collectAmt);
-    const item = store.receivables.find((r) => r.id === collectId);
-    if (!item || !amt) return;
-    const remainingNext = Math.max(0, item.remaining - amt);
-    store.updateReceivable(collectId, {
-      remaining: remainingNext,
-      status: remainingNext <= 0 ? 'paid' : 'active',
-    });
+    if (!amt) return;
+    store.collectReceivable(collectId, amt);
     setCollectId(null);
     setCollectAmt('');
   };
@@ -58,14 +54,14 @@ export function Receivables({ store }: { store: BudgetStore }) {
       <div className="topbar">
         <div>
           <h1>Alacaklar</h1>
-          <p className="subtitle">
-            Toplam kalan: {formatMoney(store.totalReceivable, store.settings)}
-          </p>
+          <p className="subtitle">Tahsilat otomatik gelire yazılır ve bakiyeye eklenir</p>
         </div>
         <button className="btn btn-primary" onClick={() => setOpen(true)}>
           <Plus size={18} /> Alacak ekle
         </button>
       </div>
+
+      <LiabilitySummary store={store} />
 
       <div className="grid-3">
         {store.receivables.length === 0 ? (
@@ -77,7 +73,15 @@ export function Receivables({ store }: { store: BudgetStore }) {
           </div>
         ) : (
           store.receivables.map((r) => (
-            <RecvCard key={r.id} item={r} store={store} onCollect={() => setCollectId(r.id)} />
+            <RecvCard
+              key={r.id}
+              item={r}
+              store={store}
+              onCollect={() => {
+                setCollectId(r.id);
+                setCollectAmt(String(r.remaining));
+              }}
+            />
           ))
         )}
       </div>
@@ -94,7 +98,7 @@ export function Receivables({ store }: { store: BudgetStore }) {
               <input value={debtor} onChange={(e) => setDebtor(e.target.value)} />
             </div>
             <div className="field">
-              <label>Vade</label>
+              <label>Son ödeme / vade</label>
               <input type="date" required value={dueDate} onChange={(e) => setDueDate(e.target.value)} />
             </div>
             <div className="field">
@@ -117,15 +121,18 @@ export function Receivables({ store }: { store: BudgetStore }) {
         </form>
       </Modal>
 
-      <Modal open={!!collectId} title="Tahsilat" onClose={() => setCollectId(null)}>
+      <Modal open={!!collectId} title="Tahsilat (gelire eklenir)" onClose={() => setCollectId(null)}>
         <form onSubmit={collect}>
+          <p style={{ fontSize: '0.85rem', color: 'var(--muted)', marginBottom: 12 }}>
+            Bu tutar harekete gelir olarak yazılır ve bakiyene eklenir.
+          </p>
           <div className="field">
             <label>Alınan tutar</label>
             <input type="number" min="1" required value={collectAmt} onChange={(e) => setCollectAmt(e.target.value)} autoFocus />
           </div>
           <div className="modal-actions">
             <button type="button" className="btn btn-ghost" onClick={() => setCollectId(null)}>Vazgeç</button>
-            <button type="submit" className="btn btn-primary">Kaydet</button>
+            <button type="submit" className="btn btn-primary">Tahsil edildi</button>
           </div>
         </form>
       </Modal>
@@ -151,6 +158,11 @@ function RecvCard({
           <div style={{ fontSize: '0.78rem', color: 'var(--muted)' }}>
             {r.debtor} · vade {formatShortDate(r.dueDate)}
           </div>
+          {r.lastPaymentDate && (
+            <div style={{ fontSize: '0.72rem', color: 'var(--teal)', marginTop: 2 }}>
+              Son tahsilat: {formatShortDate(r.lastPaymentDate)}
+            </div>
+          )}
         </div>
         <button className="btn btn-danger btn-sm" onClick={() => store.deleteReceivable(r.id)}>
           <Trash2 size={14} />
@@ -168,11 +180,11 @@ function RecvCard({
       </div>
       {r.status === 'active' ? (
         <button className="btn btn-ghost btn-sm" style={{ width: '100%' }} onClick={onCollect}>
-          Tahsilat kaydet
+          Tahsil edildi
         </button>
       ) : (
         <span style={{ fontSize: '0.85rem', color: 'var(--teal)', display: 'flex', alignItems: 'center', gap: 6 }}>
-          <Check size={14} /> Tahsil edildi
+          <Check size={14} /> Kapandı
         </span>
       )}
     </div>

@@ -19,6 +19,7 @@ export const emptyState: AppState = {
   debts: [],
   receivables: [],
   installments: [],
+  bills: [],
 };
 
 export const seedState: AppState = {
@@ -96,10 +97,10 @@ export const seedState: AppState = {
       title: 'Kredi kartı',
       creditor: 'Banka',
       total: 18000,
-      remaining: 12500,
+      remaining: 14000,
       dueDate: d(28),
       interestRate: 3.5,
-      note: 'Asgari üzeri ödemeye çalış',
+      note: 'Bu ayki ekstre',
       status: 'active',
     },
     {
@@ -148,6 +149,38 @@ export const seedState: AppState = {
       nextDueDate: d(20),
       note: 'Beyaz eşya',
       status: 'active',
+    },
+  ],
+  bills: [
+    {
+      id: 'f1',
+      title: 'Elektrik',
+      provider: 'BEDAŞ',
+      amount: 890,
+      dueDate: d(12),
+      kind: 'utility',
+      note: '',
+      status: 'pending',
+    },
+    {
+      id: 'f2',
+      title: 'Kredi kartı ekstresi',
+      provider: 'Banka',
+      amount: 14000,
+      dueDate: d(28),
+      kind: 'statement',
+      note: 'Asgari veya tamamı',
+      status: 'pending',
+    },
+    {
+      id: 'f3',
+      title: 'İnternet',
+      provider: 'TurkNet',
+      amount: 450,
+      dueDate: d(10),
+      kind: 'subscription',
+      note: '',
+      status: 'pending',
     },
   ],
 };

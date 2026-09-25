@@ -4,6 +4,7 @@ import type { BudgetStore } from '../hooks/useBudgetStore';
 import type { Debt } from '../types';
 import { formatMoney, formatShortDate } from '../utils/format';
 import { Modal } from '../components/Modal';
+import { LiabilitySummary } from '../components/LiabilitySummary';
 
 export function Debts({ store }: { store: BudgetStore }) {
   const [open, setOpen] = useState(false);
@@ -18,7 +19,6 @@ export function Debts({ store }: { store: BudgetStore }) {
   const [payAmt, setPayAmt] = useState('');
 
   const list = store.debts;
-  const active = list.filter((d) => d.status === 'active');
 
   const submit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -47,13 +47,8 @@ export function Debts({ store }: { store: BudgetStore }) {
     e.preventDefault();
     if (!payId) return;
     const amt = Number(payAmt);
-    const debt = store.debts.find((d) => d.id === payId);
-    if (!debt || !amt) return;
-    const remainingNext = Math.max(0, debt.remaining - amt);
-    store.updateDebt(payId, {
-      remaining: remainingNext,
-      status: remainingNext <= 0 ? 'paid' : 'active',
-    });
+    if (!amt) return;
+    store.payDebt(payId, amt);
     setPayId(null);
     setPayAmt('');
   };
@@ -64,7 +59,7 @@ export function Debts({ store }: { store: BudgetStore }) {
         <div>
           <h1>Borçlar</h1>
           <p className="subtitle">
-            Toplam kalan: {formatMoney(store.totalDebt, store.settings)}
+            Ödeme kaydı otomatik gidere yazılır ve bakiyeden düşer
           </p>
         </div>
         <button className="btn btn-primary" onClick={() => setOpen(true)}>
@@ -72,42 +67,48 @@ export function Debts({ store }: { store: BudgetStore }) {
         </button>
       </div>
 
+      <LiabilitySummary store={store} />
+
       <div className="grid-3">
         {list.length === 0 ? (
           <div className="panel" style={{ gridColumn: '1 / -1' }}>
             <div className="empty">
               <strong>Borç kaydı yok</strong>
-              Kredi kartı, kişi veya kurum borçlarını buraya ekle.
+              Kredi kartı ekstresi veya kişi/kurum borçlarını ekle.
             </div>
           </div>
         ) : (
-          list.map((d) => <DebtCard key={d.id} debt={d} store={store} onPay={() => setPayId(d.id)} />)
+          list.map((d) => (
+            <DebtCard
+              key={d.id}
+              debt={d}
+              store={store}
+              onPay={() => {
+                setPayId(d.id);
+                setPayAmt(String(d.remaining));
+              }}
+            />
+          ))
         )}
       </div>
 
-      {active.length === 0 && list.length > 0 && (
-        <p style={{ marginTop: 12, color: 'var(--teal)', fontWeight: 600 }}>
-          Tüm borçlar kapanmış — harika!
-        </p>
-      )}
-
-      <Modal open={open} title="Yeni borç" onClose={() => setOpen(false)}>
+      <Modal open={open} title="Yeni borç / ekstre" onClose={() => setOpen(false)}>
         <form onSubmit={submit}>
           <div className="form-grid">
             <div className="field full">
               <label>Başlık</label>
-              <input required value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Kredi kartı" />
+              <input required value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Kredi kartı ekstresi" />
             </div>
             <div className="field">
               <label>Alacaklı</label>
-              <input value={creditor} onChange={(e) => setCreditor(e.target.value)} />
+              <input value={creditor} onChange={(e) => setCreditor(e.target.value)} placeholder="Banka" />
             </div>
             <div className="field">
-              <label>Vade</label>
+              <label>Son ödeme tarihi</label>
               <input type="date" required value={dueDate} onChange={(e) => setDueDate(e.target.value)} />
             </div>
             <div className="field">
-              <label>Toplam</label>
+              <label>Toplam / ekstre</label>
               <input type="number" min="1" required value={total} onChange={(e) => setTotal(e.target.value)} />
             </div>
             <div className="field">
@@ -130,15 +131,18 @@ export function Debts({ store }: { store: BudgetStore }) {
         </form>
       </Modal>
 
-      <Modal open={!!payId} title="Ödeme yap" onClose={() => setPayId(null)}>
+      <Modal open={!!payId} title="Borç öde (gidere eklenir)" onClose={() => setPayId(null)}>
         <form onSubmit={pay}>
+          <p style={{ fontSize: '0.85rem', color: 'var(--muted)', marginBottom: 12 }}>
+            Bu tutar hareketlere gider olarak yazılır ve bakiyenden düşülür.
+          </p>
           <div className="field">
-            <label>Tutar</label>
+            <label>Ödeme tutarı</label>
             <input type="number" min="1" required value={payAmt} onChange={(e) => setPayAmt(e.target.value)} autoFocus />
           </div>
           <div className="modal-actions">
             <button type="button" className="btn btn-ghost" onClick={() => setPayId(null)}>Vazgeç</button>
-            <button type="submit" className="btn btn-primary">Öde</button>
+            <button type="submit" className="btn btn-primary">Ödendi</button>
           </div>
         </form>
       </Modal>
@@ -162,9 +166,14 @@ function DebtCard({
         <div>
           <strong>{d.title}</strong>
           <div style={{ fontSize: '0.78rem', color: 'var(--muted)' }}>
-            {d.creditor} · vade {formatShortDate(d.dueDate)}
+            {d.creditor} · son ödeme {formatShortDate(d.dueDate)}
             {d.interestRate > 0 ? ` · %${d.interestRate} faiz` : ''}
           </div>
+          {d.lastPaymentDate && (
+            <div style={{ fontSize: '0.72rem', color: 'var(--teal)', marginTop: 2 }}>
+              Son ödenen: {formatShortDate(d.lastPaymentDate)}
+            </div>
+          )}
         </div>
         <button className="btn btn-danger btn-sm" onClick={() => store.deleteDebt(d.id)}>
           <Trash2 size={14} />
@@ -182,11 +191,11 @@ function DebtCard({
       </div>
       {d.status === 'active' ? (
         <button className="btn btn-ghost btn-sm" style={{ width: '100%' }} onClick={onPay}>
-          Ödeme kaydet
+          Ödendi
         </button>
       ) : (
         <span style={{ fontSize: '0.85rem', color: 'var(--teal)', display: 'flex', alignItems: 'center', gap: 6 }}>
-          <Check size={14} /> Ödendi
+          <Check size={14} /> Kapandı
         </span>
       )}
     </div>

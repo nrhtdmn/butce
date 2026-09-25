@@ -4,6 +4,8 @@ import type { BudgetStore } from '../hooks/useBudgetStore';
 import type { Installment } from '../types';
 import { formatMoney, formatShortDate } from '../utils/format';
 import { Modal } from '../components/Modal';
+import { LiabilitySummary } from '../components/LiabilitySummary';
+import { installmentRemaining } from '../utils/finance';
 
 export function Installments({ store }: { store: BudgetStore }) {
   const [open, setOpen] = useState(false);
@@ -47,13 +49,15 @@ export function Installments({ store }: { store: BudgetStore }) {
         <div>
           <h1>Taksitler</h1>
           <p className="subtitle">
-            Aylık yük: {formatMoney(store.monthlyInstallments, store.settings)}
+            “Ödendi” deyince aylık tutar gidere yazılır · yük {formatMoney(store.monthlyInstallments, store.settings)}
           </p>
         </div>
         <button className="btn btn-primary" onClick={() => setOpen(true)}>
           <Plus size={18} /> Taksit ekle
         </button>
       </div>
+
+      <LiabilitySummary store={store} />
 
       <div className="grid-3">
         {store.installments.length === 0 ? (
@@ -64,9 +68,7 @@ export function Installments({ store }: { store: BudgetStore }) {
             </div>
           </div>
         ) : (
-          store.installments.map((i) => (
-            <InstCard key={i.id} item={i} store={store} />
-          ))
+          store.installments.map((i) => <InstCard key={i.id} item={i} store={store} />)
         )}
       </div>
 
@@ -94,7 +96,7 @@ export function Installments({ store }: { store: BudgetStore }) {
               <input type="number" min="0" value={paidCount} onChange={(e) => setPaidCount(e.target.value)} />
             </div>
             <div className="field full">
-              <label>Sonraki vade</label>
+              <label>Sonraki / son ödeme tarihi</label>
               <input type="date" required value={nextDueDate} onChange={(e) => setNextDueDate(e.target.value)} />
             </div>
             <div className="field full">
@@ -121,8 +123,13 @@ function InstCard({ item: i, store }: { item: Installment; store: BudgetStore })
         <div>
           <strong>{i.title}</strong>
           <div style={{ fontSize: '0.78rem', color: 'var(--muted)' }}>
-            {i.paidCount}/{i.totalCount} ödendi · sonraki {formatShortDate(i.nextDueDate)}
+            {i.paidCount}/{i.totalCount} · son ödeme {formatShortDate(i.nextDueDate)}
           </div>
+          {i.lastPaymentDate && (
+            <div style={{ fontSize: '0.72rem', color: 'var(--teal)', marginTop: 2 }}>
+              Son ödenen: {formatShortDate(i.lastPaymentDate)}
+            </div>
+          )}
         </div>
         <button className="btn btn-danger btn-sm" onClick={() => store.deleteInstallment(i.id)}>
           <Trash2 size={14} />
@@ -133,15 +140,23 @@ function InstCard({ item: i, store }: { item: Installment; store: BudgetStore })
         <span style={{ fontSize: '0.75rem', fontWeight: 500, color: 'var(--muted)', marginLeft: 6 }}>/ ay</span>
       </div>
       <div className="budget-meta" style={{ marginBottom: 8 }}>
-        <span>%{pct} tamamlandı</span>
-        <span>{left} taksit kaldı</span>
+        <span>%{pct} · kalan {formatMoney(installmentRemaining(i), store.settings)}</span>
+        <span>{left} taksit</span>
       </div>
       <div className="budget-bar" style={{ marginBottom: 12 }}>
         <span style={{ width: `${pct}%`, background: '#457B9D' }} />
       </div>
       {i.status === 'active' ? (
-        <button className="btn btn-ghost btn-sm" style={{ width: '100%' }} onClick={() => store.payInstallment(i.id)}>
-          Bu ayı ödendi işaretle
+        <button
+          className="btn btn-ghost btn-sm"
+          style={{ width: '100%' }}
+          onClick={() => {
+            if (confirm(`${formatMoney(i.monthlyAmount, store.settings)} gidere eklensin mi?`)) {
+              store.payInstallment(i.id);
+            }
+          }}
+        >
+          Ödendi (gidere ekle)
         </button>
       ) : (
         <span style={{ fontSize: '0.85rem', color: 'var(--teal)', display: 'flex', alignItems: 'center', gap: 6 }}>

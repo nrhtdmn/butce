@@ -13,9 +13,11 @@ PWA olarak ana ekrana eklenebilir; çevrimdışı çalışır.
 - **Kategoriler** — ikon ve renklerle özelleştirilebilir
 - **Bütçeler** — kategori bazlı aylık limitler ve kullanım çubukları
 - **Hedefler** — birikim hedefleri ve katkı ekleme
-- **Borçlar** — kredi/kişi borçları, ödeme takibi
-- **Alacaklar** — tahsilat takibi
-- **Taksitler** — aylık taksit planları
+- **Borçlar** — kredi/ekstre borçları; ödeyince otomatik gider
+- **Alacaklar** — tahsilat takibi; alınca otomatik gelir
+- **Taksitler** — aylık plan; ödeyince otomatik gider
+- **Faturalar** — fatura & kredi kartı ekstresi, son ödeme tarihi
+- **Takvim** — borç/fatura/taksit vadeleri
 - **Tavsiyeler** — verilere göre kişiselleştirilmiş ekonomi önerileri
 - **Raporlar** — pasta ve çubuk grafiklerle analiz
 - **Ayarlar** — profil, para birimi, JSON yedek (dışa/içe aktar), veri sıfırlama

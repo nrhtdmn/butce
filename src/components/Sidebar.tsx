@@ -12,6 +12,8 @@ import {
   WalletCards,
   CalendarClock,
   Lightbulb,
+  FileText,
+  CalendarDays,
 } from 'lucide-react';
 import type { PageId } from '../types';
 import { formatMoney } from '../utils/format';
@@ -26,6 +28,8 @@ const NAV: { id: PageId; label: string; icon: typeof LayoutDashboard }[] = [
   { id: 'debts', label: 'Borçlar', icon: HandCoins },
   { id: 'receivables', label: 'Alacaklar', icon: WalletCards },
   { id: 'installments', label: 'Taksitler', icon: CalendarClock },
+  { id: 'bills', label: 'Faturalar', icon: FileText },
+  { id: 'calendar', label: 'Takvim', icon: CalendarDays },
   { id: 'advice', label: 'Tavsiyeler', icon: Lightbulb },
   { id: 'reports', label: 'Raporlar', icon: BarChart3 },
   { id: 'settings', label: 'Ayarlar', icon: Settings },
@@ -97,48 +101,17 @@ export function MobileToggle({ open, onToggle }: { open: boolean; onToggle: () =
 }
 
 export const PAGE_META: Record<PageId, { title: string; subtitle: string }> = {
-  dashboard: {
-    title: 'Merhaba, dengeni koru',
-    subtitle: 'Bu ayın nabzı tek bakışta',
-  },
-  transactions: {
-    title: 'Hareketler',
-    subtitle: 'Gelir ve gider kayıtların',
-  },
-  categories: {
-    title: 'Kategoriler',
-    subtitle: 'Paranın gittiği yerleri tanımla',
-  },
-  budgets: {
-    title: 'Bütçeler',
-    subtitle: 'Limit koy, aşımı önceden gör',
-  },
-  goals: {
-    title: 'Hedefler',
-    subtitle: 'Birikimlerini görünür kıl',
-  },
-  debts: {
-    title: 'Borçlar',
-    subtitle: 'Ödeyeceğin yükümlülükler',
-  },
-  receivables: {
-    title: 'Alacaklar',
-    subtitle: 'Sana dönecek paralar',
-  },
-  installments: {
-    title: 'Taksitler',
-    subtitle: 'Aylık ödeme planların',
-  },
-  advice: {
-    title: 'Tavsiyeler',
-    subtitle: 'Akıllı ekonomi önerileri',
-  },
-  reports: {
-    title: 'Raporlar',
-    subtitle: 'Trendleri ve dağılımı incele',
-  },
-  settings: {
-    title: 'Ayarlar',
-    subtitle: 'Uygulamayı kendine göre ayarla',
-  },
+  dashboard: { title: 'Merhaba, dengeni koru', subtitle: 'Bu ayın nabzı tek bakışta' },
+  transactions: { title: 'Hareketler', subtitle: 'Gelir ve gider kayıtların' },
+  categories: { title: 'Kategoriler', subtitle: 'Paranın gittiği yerleri tanımla' },
+  budgets: { title: 'Bütçeler', subtitle: 'Limit koy, aşımı önceden gör' },
+  goals: { title: 'Hedefler', subtitle: 'Birikimlerini görünür kıl' },
+  debts: { title: 'Borçlar', subtitle: 'Ödeyeceğin yükümlülükler' },
+  receivables: { title: 'Alacaklar', subtitle: 'Sana dönecek paralar' },
+  installments: { title: 'Taksitler', subtitle: 'Aylık ödeme planların' },
+  bills: { title: 'Faturalar', subtitle: 'Fatura ve ekstre takibi' },
+  calendar: { title: 'Takvim', subtitle: 'Ödeme tarihlerini gör' },
+  advice: { title: 'Tavsiyeler', subtitle: 'Akıllı ekonomi önerileri' },
+  reports: { title: 'Raporlar', subtitle: 'Trendleri ve dağılımı incele' },
+  settings: { title: 'Ayarlar', subtitle: 'Uygulamayı kendine göre ayarla' },
 };

@@ -9,6 +9,7 @@ export type AdviceInput = Pick<
   | 'debts'
   | 'receivables'
   | 'installments'
+  | 'bills'
   | 'settings'
 > & {
   month: string;
@@ -30,6 +31,7 @@ export function buildAdvice(store: AdviceInput): AdviceItem[] {
     debts,
     receivables,
     installments,
+    bills,
     month,
     spentByCategory,
     settings,
@@ -154,6 +156,26 @@ export function buildAdvice(store: AdviceInput): AdviceItem[] {
       level: 'warn',
       title: 'Yaklaşan taksit',
       body: `${soonInst.map((i) => i.title).join(', ')} için 7 gün içinde ödeme var.`,
+    });
+  }
+
+  const pendingBills = bills.filter((b) => b.status === 'pending');
+  const overdueBills = pendingBills.filter(
+    (b) => b.dueDate < new Date().toISOString().slice(0, 10),
+  );
+  if (overdueBills.length) {
+    items.push({
+      id: 'bill-overdue',
+      level: 'alert',
+      title: 'Gecikmiş fatura / ekstre',
+      body: `${overdueBills.map((b) => b.title).join(', ')} son ödeme tarihini geçti. Gecikme faizi oluşabilir.`,
+    });
+  } else if (pendingBills.length) {
+    items.push({
+      id: 'bill-pending',
+      level: 'tip',
+      title: 'Bekleyen faturalar',
+      body: `${pendingBills.length} fatura/ekstre ödemesi var. Takvimden son ödeme tarihlerini kontrol et.`,
     });
   }
 

@@ -139,8 +139,8 @@ export function Settings({ store }: { store: BudgetStore }) {
       <div className="panel settings-block danger-zone">
         <div className="panel-title">Tehlikeli alan</div>
         <p style={{ color: 'var(--muted)', fontSize: '0.9rem', marginBottom: 14 }}>
-          Tüm hareket, kategori, bütçe, hedef, borç, alacak ve taksitleri siler; bakiyeyi
-          sıfırlar. Bu işlem geri alınamaz.
+          Tüm hareket, kategori, bütçe, hedef, borç, alacak, taksit ve faturaları siler;
+          bakiyeyi sıfırlar. Bu işlem geri alınamaz.
         </p>
         <button
           className="btn btn-danger"

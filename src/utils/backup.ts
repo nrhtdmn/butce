@@ -28,6 +28,7 @@ function normalizeImported(data: AppState): AppState {
     debts: data.debts ?? [],
     receivables: data.receivables ?? [],
     installments: data.installments ?? [],
+    bills: data.bills ?? [],
   };
 }
 

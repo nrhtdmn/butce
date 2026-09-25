@@ -147,6 +147,18 @@ export function Dashboard({ store }: { store: BudgetStore }) {
             <strong>{formatMoney(store.monthlyInstallments, store.settings)}</strong>
           </div>
         </div>
+        <div className="finance-chip">
+          <div>
+            <span>Fatura / ekstre</span>
+            <strong>{formatMoney(store.totalBillsDue, store.settings)}</strong>
+          </div>
+        </div>
+        <div className="finance-chip">
+          <div>
+            <span>Toplam yükümlülük</span>
+            <strong>{formatMoney(store.totalLiabilities, store.settings)}</strong>
+          </div>
+        </div>
       </div>
 
       {topAdvice.length > 0 && (

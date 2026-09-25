@@ -11,6 +11,8 @@ import { Goals } from './pages/Goals';
 import { Debts } from './pages/Debts';
 import { Receivables } from './pages/Receivables';
 import { Installments } from './pages/Installments';
+import { Bills } from './pages/Bills';
+import { CalendarPage } from './pages/CalendarPage';
 import { Advice } from './pages/Advice';
 import { Reports } from './pages/Reports';
 import { Settings } from './pages/Settings';
@@ -19,7 +21,6 @@ function App() {
   const store = useBudgetStore();
   const [page, setPage] = useState<PageId>('dashboard');
   const [navOpen, setNavOpen] = useState(false);
-
   const meta = PAGE_META[page];
 
   return (
@@ -40,6 +41,8 @@ function App() {
         {page === 'debts' && <Debts store={store} />}
         {page === 'receivables' && <Receivables store={store} />}
         {page === 'installments' && <Installments store={store} />}
+        {page === 'bills' && <Bills store={store} />}
+        {page === 'calendar' && <CalendarPage store={store} />}
         {page === 'advice' && <Advice store={store} />}
         {page === 'reports' && <Reports store={store} />}
         {page === 'settings' && <Settings store={store} />}
