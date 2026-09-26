@@ -4,7 +4,7 @@ import type { BudgetStore } from '../hooks/useBudgetStore';
 import type { Bill, BillKind } from '../types';
 import { formatMoney, formatShortDate } from '../utils/format';
 import { Modal } from '../components/Modal';
-import { LiabilitySummary } from '../components/LiabilitySummary';
+import { PageHeroStats } from '../components/LiabilitySummary';
 
 const KIND_LABEL: Record<BillKind, string> = {
   utility: 'Fatura',
@@ -59,7 +59,7 @@ export function Bills({ store }: { store: BudgetStore }) {
         </button>
       </div>
 
-      <LiabilitySummary store={store} />
+      <PageHeroStats store={store} variant="bills" />
 
       <h3 style={{ fontFamily: 'var(--display)', marginBottom: 12, fontSize: '1rem' }}>
         Ödenecek ({pending.length})

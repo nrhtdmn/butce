@@ -4,7 +4,7 @@ import type { BudgetStore } from '../hooks/useBudgetStore';
 import type { Receivable } from '../types';
 import { formatMoney, formatShortDate } from '../utils/format';
 import { Modal } from '../components/Modal';
-import { LiabilitySummary } from '../components/LiabilitySummary';
+import { PageHeroStats } from '../components/LiabilitySummary';
 
 export function Receivables({ store }: { store: BudgetStore }) {
   const [open, setOpen] = useState(false);
@@ -61,7 +61,7 @@ export function Receivables({ store }: { store: BudgetStore }) {
         </button>
       </div>
 
-      <LiabilitySummary store={store} />
+      <PageHeroStats store={store} variant="receivables" />
 
       <div className="grid-3">
         {store.receivables.length === 0 ? (

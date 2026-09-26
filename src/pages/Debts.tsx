@@ -4,7 +4,7 @@ import type { BudgetStore } from '../hooks/useBudgetStore';
 import type { Debt } from '../types';
 import { formatMoney, formatShortDate } from '../utils/format';
 import { Modal } from '../components/Modal';
-import { LiabilitySummary } from '../components/LiabilitySummary';
+import { PageHeroStats } from '../components/LiabilitySummary';
 
 export function Debts({ store }: { store: BudgetStore }) {
   const [open, setOpen] = useState(false);
@@ -67,7 +67,7 @@ export function Debts({ store }: { store: BudgetStore }) {
         </button>
       </div>
 
-      <LiabilitySummary store={store} />
+      <PageHeroStats store={store} variant="debts" />
 
       <div className="grid-3">
         {list.length === 0 ? (
