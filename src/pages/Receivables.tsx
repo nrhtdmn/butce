@@ -1,42 +1,64 @@
 import { useState } from 'react';
-import { Check, Plus, Trash2 } from 'lucide-react';
+import { Check, Pencil, Plus, Trash2 } from 'lucide-react';
 import type { BudgetStore } from '../hooks/useBudgetStore';
 import type { Receivable } from '../types';
 import { formatMoney, formatShortDate } from '../utils/format';
 import { Modal } from '../components/Modal';
 import { PageHeroStats } from '../components/LiabilitySummary';
 
+const emptyForm = () => ({
+  title: '',
+  debtor: '',
+  total: '',
+  remaining: '',
+  dueDate: new Date().toISOString().slice(0, 10),
+  note: '',
+});
+
 export function Receivables({ store }: { store: BudgetStore }) {
   const [open, setOpen] = useState(false);
-  const [title, setTitle] = useState('');
-  const [debtor, setDebtor] = useState('');
-  const [total, setTotal] = useState('');
-  const [remaining, setRemaining] = useState('');
-  const [dueDate, setDueDate] = useState(new Date().toISOString().slice(0, 10));
-  const [note, setNote] = useState('');
+  const [editId, setEditId] = useState<string | null>(null);
+  const [form, setForm] = useState(emptyForm());
   const [collectId, setCollectId] = useState<string | null>(null);
   const [collectAmt, setCollectAmt] = useState('');
 
+  const closeForm = () => {
+    setOpen(false);
+    setEditId(null);
+    setForm(emptyForm());
+  };
+
+  const openEdit = (r: Receivable) => {
+    setEditId(r.id);
+    setForm({
+      title: r.title,
+      debtor: r.debtor,
+      total: String(r.total),
+      remaining: String(r.remaining),
+      dueDate: r.dueDate,
+      note: r.note,
+    });
+    setOpen(true);
+  };
+
   const submit = (e: React.FormEvent) => {
     e.preventDefault();
-    const t = Number(total);
-    const r = Number(remaining || total);
-    if (!title.trim() || !t) return;
-    store.addReceivable({
-      title: title.trim(),
-      debtor: debtor.trim() || '—',
+    const t = Number(form.total);
+    const r = Number(form.remaining || form.total);
+    if (!form.title.trim() || !t) return;
+    const remaining = Math.min(t, Math.max(0, r));
+    const payload = {
+      title: form.title.trim(),
+      debtor: form.debtor.trim() || '—',
       total: t,
-      remaining: Math.min(t, r),
-      dueDate,
-      note,
-      status: 'active',
-    });
-    setOpen(false);
-    setTitle('');
-    setDebtor('');
-    setTotal('');
-    setRemaining('');
-    setNote('');
+      remaining,
+      dueDate: form.dueDate,
+      note: form.note,
+      status: (remaining <= 0 ? 'paid' : 'active') as Receivable['status'],
+    };
+    if (editId) store.updateReceivable(editId, payload);
+    else store.addReceivable(payload);
+    closeForm();
   };
 
   const collect = (e: React.FormEvent) => {
@@ -56,7 +78,14 @@ export function Receivables({ store }: { store: BudgetStore }) {
           <h1>Alacaklar</h1>
           <p className="subtitle">Tahsilat otomatik gelire yazılır ve bakiyeye eklenir</p>
         </div>
-        <button className="btn btn-primary" onClick={() => setOpen(true)}>
+        <button
+          className="btn btn-primary"
+          onClick={() => {
+            setEditId(null);
+            setForm(emptyForm());
+            setOpen(true);
+          }}
+        >
           <Plus size={18} /> Alacak ekle
         </button>
       </div>
@@ -77,6 +106,7 @@ export function Receivables({ store }: { store: BudgetStore }) {
               key={r.id}
               item={r}
               store={store}
+              onEdit={() => openEdit(r)}
               onCollect={() => {
                 setCollectId(r.id);
                 setCollectAmt(String(r.remaining));
@@ -86,36 +116,36 @@ export function Receivables({ store }: { store: BudgetStore }) {
         )}
       </div>
 
-      <Modal open={open} title="Yeni alacak" onClose={() => setOpen(false)}>
+      <Modal open={open} title={editId ? 'Alacağı düzenle' : 'Yeni alacak'} onClose={closeForm}>
         <form onSubmit={submit}>
           <div className="form-grid">
             <div className="field full">
               <label>Başlık</label>
-              <input required value={title} onChange={(e) => setTitle(e.target.value)} />
+              <input required value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} />
             </div>
             <div className="field">
               <label>Borçlu</label>
-              <input value={debtor} onChange={(e) => setDebtor(e.target.value)} />
+              <input value={form.debtor} onChange={(e) => setForm({ ...form, debtor: e.target.value })} />
             </div>
             <div className="field">
               <label>Son ödeme / vade</label>
-              <input type="date" required value={dueDate} onChange={(e) => setDueDate(e.target.value)} />
+              <input type="date" required value={form.dueDate} onChange={(e) => setForm({ ...form, dueDate: e.target.value })} />
             </div>
             <div className="field">
               <label>Toplam</label>
-              <input type="number" min="1" required value={total} onChange={(e) => setTotal(e.target.value)} />
+              <input type="number" min="1" required value={form.total} onChange={(e) => setForm({ ...form, total: e.target.value })} />
             </div>
             <div className="field">
               <label>Kalan</label>
-              <input type="number" min="0" value={remaining} onChange={(e) => setRemaining(e.target.value)} />
+              <input type="number" min="0" value={form.remaining} onChange={(e) => setForm({ ...form, remaining: e.target.value })} />
             </div>
             <div className="field full">
               <label>Not</label>
-              <input value={note} onChange={(e) => setNote(e.target.value)} />
+              <input value={form.note} onChange={(e) => setForm({ ...form, note: e.target.value })} />
             </div>
           </div>
           <div className="modal-actions">
-            <button type="button" className="btn btn-ghost" onClick={() => setOpen(false)}>Vazgeç</button>
+            <button type="button" className="btn btn-ghost" onClick={closeForm}>Vazgeç</button>
             <button type="submit" className="btn btn-primary">Kaydet</button>
           </div>
         </form>
@@ -144,10 +174,12 @@ function RecvCard({
   item: r,
   store,
   onCollect,
+  onEdit,
 }: {
   item: Receivable;
   store: BudgetStore;
   onCollect: () => void;
+  onEdit: () => void;
 }) {
   const pct = r.total > 0 ? Math.round(((r.total - r.remaining) / r.total) * 100) : 0;
   return (
@@ -164,9 +196,14 @@ function RecvCard({
             </div>
           )}
         </div>
-        <button className="btn btn-danger btn-sm" onClick={() => store.deleteReceivable(r.id)}>
-          <Trash2 size={14} />
-        </button>
+        <div style={{ display: 'flex', gap: 4 }}>
+          <button className="btn btn-ghost btn-sm" onClick={onEdit} aria-label="Düzenle">
+            <Pencil size={14} />
+          </button>
+          <button className="btn btn-danger btn-sm" onClick={() => store.deleteReceivable(r.id)}>
+            <Trash2 size={14} />
+          </button>
+        </div>
       </div>
       <div style={{ margin: '14px 0 6px', fontFamily: 'var(--display)', fontWeight: 800, fontSize: '1.35rem', color: 'var(--teal)' }}>
         {formatMoney(r.remaining, store.settings)}

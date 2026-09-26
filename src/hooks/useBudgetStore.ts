@@ -198,6 +198,21 @@ export function useBudgetStore() {
 
   const upsertBudget = useCallback((budget: Omit<Budget, 'id'> & { id?: string }) => {
     setState((s) => {
+      if (budget.id) {
+        return {
+          ...s,
+          budgets: s.budgets.map((b) =>
+            b.id === budget.id
+              ? {
+                  ...b,
+                  categoryId: budget.categoryId,
+                  limit: budget.limit,
+                  month: budget.month,
+                }
+              : b,
+          ),
+        };
+      }
       const existing = s.budgets.find(
         (b) => b.categoryId === budget.categoryId && b.month === budget.month,
       );

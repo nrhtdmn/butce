@@ -1,7 +1,7 @@
 import { useState } from 'react';
-import { Plus, Trash2 } from 'lucide-react';
+import { Pencil, Plus, Trash2 } from 'lucide-react';
 import type { BudgetStore } from '../hooks/useBudgetStore';
-import type { TransactionType } from '../types';
+import type { Category, TransactionType } from '../types';
 import { CategoryIcon, ICON_OPTIONS } from '../components/CategoryIcon';
 import { Modal } from '../components/Modal';
 
@@ -20,17 +20,36 @@ const COLORS = [
 
 export function Categories({ store }: { store: BudgetStore }) {
   const [open, setOpen] = useState(false);
+  const [editId, setEditId] = useState<string | null>(null);
   const [name, setName] = useState('');
   const [type, setType] = useState<TransactionType>('expense');
   const [icon, setIcon] = useState('cart');
   const [color, setColor] = useState(COLORS[3]);
 
+  const closeForm = () => {
+    setOpen(false);
+    setEditId(null);
+    setName('');
+    setType('expense');
+    setIcon('cart');
+    setColor(COLORS[3]);
+  };
+
+  const openEdit = (c: Category) => {
+    setEditId(c.id);
+    setName(c.name);
+    setType(c.type);
+    setIcon(c.icon);
+    setColor(c.color);
+    setOpen(true);
+  };
+
   const submit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!name.trim()) return;
-    store.addCategory({ name: name.trim(), type, icon, color });
-    setName('');
-    setOpen(false);
+    if (editId) store.updateCategory(editId, { name: name.trim(), type, icon, color });
+    else store.addCategory({ name: name.trim(), type, icon, color });
+    closeForm();
   };
 
   return (
@@ -40,7 +59,14 @@ export function Categories({ store }: { store: BudgetStore }) {
           <h1>Kategoriler</h1>
           <p className="subtitle">{store.categories.length} kategori tanımlı</p>
         </div>
-        <button className="btn btn-primary" onClick={() => setOpen(true)}>
+        <button
+          className="btn btn-primary"
+          onClick={() => {
+            setEditId(null);
+            setName('');
+            setOpen(true);
+          }}
+        >
           <Plus size={18} />
           Yeni kategori
         </button>
@@ -48,13 +74,7 @@ export function Categories({ store }: { store: BudgetStore }) {
 
       {(['income', 'expense'] as const).map((group) => (
         <div key={group} style={{ marginBottom: 24 }}>
-          <h3
-            style={{
-              fontFamily: 'var(--display)',
-              marginBottom: 12,
-              fontSize: '1rem',
-            }}
-          >
+          <h3 style={{ fontFamily: 'var(--display)', marginBottom: 12, fontSize: '1rem' }}>
             {group === 'income' ? 'Gelir kategorileri' : 'Gider kategorileri'}
           </h3>
           <div className="cat-grid">
@@ -73,40 +93,37 @@ export function Categories({ store }: { store: BudgetStore }) {
                       </div>
                     </div>
                   </div>
-                  <button
-                    className="btn btn-danger btn-sm"
-                    onClick={() => {
-                      if (confirm(`"${c.name}" silinsin mi? İlişkili kayıtlar da silinir.`)) {
-                        store.deleteCategory(c.id);
-                      }
-                    }}
-                  >
-                    <Trash2 size={14} /> Sil
-                  </button>
+                  <div style={{ display: 'flex', gap: 6 }}>
+                    <button className="btn btn-ghost btn-sm" onClick={() => openEdit(c)}>
+                      <Pencil size={14} /> Düzenle
+                    </button>
+                    <button
+                      className="btn btn-danger btn-sm"
+                      onClick={() => {
+                        if (confirm(`"${c.name}" silinsin mi? İlişkili kayıtlar da silinir.`)) {
+                          store.deleteCategory(c.id);
+                        }
+                      }}
+                    >
+                      <Trash2 size={14} /> Sil
+                    </button>
+                  </div>
                 </div>
               ))}
           </div>
         </div>
       ))}
 
-      <Modal open={open} title="Yeni kategori" onClose={() => setOpen(false)}>
+      <Modal open={open} title={editId ? 'Kategoriyi düzenle' : 'Yeni kategori'} onClose={closeForm}>
         <form onSubmit={submit}>
           <div className="form-grid">
             <div className="field full">
               <label>Tür</label>
               <div className="segment">
-                <button
-                  type="button"
-                  className={type === 'income' ? 'active income' : ''}
-                  onClick={() => setType('income')}
-                >
+                <button type="button" className={type === 'income' ? 'active income' : ''} onClick={() => setType('income')}>
                   Gelir
                 </button>
-                <button
-                  type="button"
-                  className={type === 'expense' ? 'active expense' : ''}
-                  onClick={() => setType('expense')}
-                >
+                <button type="button" className={type === 'expense' ? 'active expense' : ''} onClick={() => setType('expense')}>
                   Gider
                 </button>
               </div>
@@ -160,12 +177,8 @@ export function Categories({ store }: { store: BudgetStore }) {
             </div>
           </div>
           <div className="modal-actions">
-            <button type="button" className="btn btn-ghost" onClick={() => setOpen(false)}>
-              Vazgeç
-            </button>
-            <button type="submit" className="btn btn-primary">
-              Ekle
-            </button>
+            <button type="button" className="btn btn-ghost" onClick={closeForm}>Vazgeç</button>
+            <button type="submit" className="btn btn-primary">Kaydet</button>
           </div>
         </form>
       </Modal>
